@@ -71,4 +71,37 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const saleResult = await pool.query(
+      `SELECT s.*, u.name as created_by_name
+       FROM sales s 
+       LEFT JOIN users u ON s.created_by =  u.id
+       WHERE s.id = $1`, 
+       [id]
+      );
+      if (saleResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Sale not found' });
+      }
+
+      const itemsResult = await pool.query(
+        `SELECT si.*, p.name as product_name, p.sku 
+         FROM sale_items si
+         JOIN products p ON si.product_id = p.id 
+         WHERE si.sale_id = $1`, 
+         [id]
+      );
+
+      const sale = saleResult.rows[0];
+      sale.items = itemsResult.rows;
+
+      res.json(sale);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;

@@ -7,9 +7,16 @@ export function Sales() {
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [lines, setLines] = useState([{ ...emptyLine }]);
+  const [selectedSale, setSelectedSale] = useState(null);
 
   function load() {
     api.get("/sales").then(setSales);
+  }
+
+  function openSaleDetails(id) {
+    api.get(`/sales/${id}`).then((res) => {
+      setSelectedSale(res);
+    });
   }
   useEffect(load, []);
   useEffect(() => {
@@ -51,13 +58,12 @@ export function Sales() {
     // TODO (Phase 7): nothing here (or on the server) stops submitting a
     // quantity greater than what's in stock.
     try {
-       await api.post("/sales", { items });
-    setLines([{ ...emptyLine }]);
-    load();
+      await api.post("/sales", { items });
+      setLines([{ ...emptyLine }]);
+      load();
     } catch (err) {
-      alert(err.response?.data?.error || err.message);
+      alert(err.response?.data?.error || "Error creating sale");
     }
-   
   }
 
   return (
@@ -114,7 +120,11 @@ export function Sales() {
         </thead>
         <tbody>
           {sales.map((s) => (
-            <tr key={s.id}>
+            <tr
+              key={s.id}
+              onClick={() => openSaleDetails(s.id)}
+              style={{ cursor: "pointer" }}
+            >
               <td>{s.id}</td>
               <td>${Number(s.total_amount).toFixed(2)}</td>
               <td>{new Date(s.created_at).toLocaleString()}</td>
@@ -122,6 +132,36 @@ export function Sales() {
           ))}
         </tbody>
       </table>
+      {selectedSale && (
+        <div className="sale-details-section">
+          <h3>Sale Details ({selectedSale.id})</h3>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Items</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Sub Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {selectedSale.items?.map((item, index) => (
+                <tr key={index}>
+                  <td>{item.product_name}</td>
+                  <td>{item.quantity}</td>
+                  <td>${Number(item.unit_price).toFixed(2)}</td>
+                  <td>${Number(item.quantity * item.unit_price).toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <button style={{margin: "1rem 0"}} onClick={() => setSelectedSale(null)}>
+            Close
+          </button>
+        </div>
+      )}
     </div>
   );
 }
