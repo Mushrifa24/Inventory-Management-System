@@ -62,7 +62,7 @@ export function Sales() {
       setLines([{ ...emptyLine }]);
       load();
     } catch (err) {
-      alert(err.response?.data?.error || "Error creating sale");
+      alert(err.response?.data?.error || err.message );
     }
   }
 
@@ -89,6 +89,8 @@ export function Sales() {
               value={line.quantity}
               onChange={(e) => updateLine(i, "quantity", e.target.value)}
               required
+              min="1"
+              type="number"
             />
             <input
               placeholder="Unit price"
@@ -132,6 +134,7 @@ export function Sales() {
           ))}
         </tbody>
       </table>
+
       {selectedSale && (
         <div className="sale-details-section">
           <h3>Sale Details ({selectedSale.id})</h3>
