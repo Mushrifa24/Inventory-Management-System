@@ -62,7 +62,7 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Product name is required" });
   }
   if (price !== undefined && price <= 0 ) {
-    return res.status(400).json({ error: "Price cannot be negative or zero" });
+    return res.status(400).json({ error: "Price must be valid number" });
   }
   try {
     const result = await pool.query(
@@ -97,5 +97,18 @@ router.put("/:id", async (req, res) => {
 
 // Intentionally missing: DELETE /:id. The frontend has a Delete button
 // already wired to this endpoint — Phase 3 asks for delete to be completed.
+
+router.delete("/:id", async (req, res) => {
+  const {id} = req.params;
+  const query = "DELETE FROM products WHERE id = $1 RETURNING *";
+  const result = await pool.query(query, [id]);
+
+  if (result.rows.length === 0) {
+    return res.status(404).json({ error: "Product not found" });
+  }
+
+  res.json({ message: "Product deleted successfully", deletedProduct: result.rows[0] });
+
+});
 
 export default router;
